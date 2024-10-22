@@ -17,59 +17,63 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
 
-
 @ExtendWith(MockitoExtension.class)
 public class CsvProcessingJobTest {
     private static final ZoneId LAGOS_ZONE = ZoneId.of("Africa/Lagos");
 
     @Mock
-    private CsvParser csvParser;
+    private CsvParserImpl csvParserImpl;
 
     @Mock
-    private BitMaskDayParser bitMaskDayParser;
+    private BitMaskDayParserImpl bitMaskDayParserImpl;
 
     @InjectMocks
     private CsvProcessingJob csvProcessingJob;
 
     @Test
     public void testRun_ConditionsMet_ShouldLaunchApp() {
-        when(csvParser.parseCsv()).thenReturn(new int[]{127, 10, 30});
+        when(csvParserImpl.parseCsv()).thenReturn(new int[]{127, 10, 30});
 
-        when(bitMaskDayParser.getDays(127)).thenReturn(List.of(DayOfWeek.TUESDAY));
+        try (MockedStatic<BitMaskDayParserImpl> mockedBitMaskDayParser = mockStatic(BitMaskDayParserImpl.class)) {
+            mockedBitMaskDayParser.when(() -> BitMaskDayParserImpl.getDays(127)).thenReturn(List.of(DayOfWeek.TUESDAY));
 
-        ZonedDateTime fixedNow = ZonedDateTime.of(
-                LocalDate.of(2024, 10, 22),
-                LocalTime.of(10, 31),
-                LAGOS_ZONE);
+            ZonedDateTime fixedNow = ZonedDateTime.of(
+                    LocalDate.of(2024, 10, 22),
+                    LocalTime.of(10, 31),
+                    LAGOS_ZONE);
 
-        try (MockedStatic<ZonedDateTime> mockedZonedDateTime = mockStatic(ZonedDateTime.class)) {
-            mockedZonedDateTime.when(() -> ZonedDateTime.now(LAGOS_ZONE)).thenReturn(fixedNow);
+            try (MockedStatic<ZonedDateTime> mockedZonedDateTime = mockStatic(ZonedDateTime.class)) {
+                mockedZonedDateTime.when(() -> ZonedDateTime.now(LAGOS_ZONE)).thenReturn(fixedNow);
 
-            csvProcessingJob.run();
+                csvProcessingJob.run();
 
-            verify(csvParser, times(1)).parseCsv();
-            verify(bitMaskDayParser, times(1)).getDays(127);
+                verify(csvParserImpl, times(1)).parseCsv();
+                mockedBitMaskDayParser.verify(() -> BitMaskDayParserImpl.getDays(127), times(1));
+            }
         }
     }
 
     @Test
     public void testRun_ConditionsNotMet_ShouldNotLaunchApp() {
-        when(csvParser.parseCsv()).thenReturn(new int[]{127, 10, 30});
+        when(csvParserImpl.parseCsv()).thenReturn(new int[]{127, 10, 30});
 
-        when(bitMaskDayParser.getDays(127)).thenReturn(List.of(DayOfWeek.MONDAY));
+        try (MockedStatic<BitMaskDayParserImpl> mockedBitMaskDayParser = mockStatic(BitMaskDayParserImpl.class)) {
+            mockedBitMaskDayParser.when(() -> BitMaskDayParserImpl.getDays(127)).thenReturn(List.of(DayOfWeek.MONDAY));
 
-        ZonedDateTime fixedNow = ZonedDateTime.of(
-                LocalDate.of(2024, 10, 22),
-                LocalTime.of(10, 31),
-                LAGOS_ZONE);
+            ZonedDateTime fixedNow = ZonedDateTime.of(
+                    LocalDate.of(2024, 10, 22),
+                    LocalTime.of(10, 31),
+                    LAGOS_ZONE);
 
-        try (MockedStatic<ZonedDateTime> mockedZonedDateTime = mockStatic(ZonedDateTime.class)) {
-            mockedZonedDateTime.when(() -> ZonedDateTime.now(LAGOS_ZONE)).thenReturn(fixedNow);
+            try (MockedStatic<ZonedDateTime> mockedZonedDateTime = mockStatic(ZonedDateTime.class)) {
+                mockedZonedDateTime.when(() -> ZonedDateTime.now(LAGOS_ZONE)).thenReturn(fixedNow);
 
-            csvProcessingJob.run();
+                csvProcessingJob.run();
 
-            verify(csvParser, times(1)).parseCsv();
-            verify(bitMaskDayParser, times(1)).getDays(127);
+                verify(csvParserImpl, times(1)).parseCsv();
+                mockedBitMaskDayParser.verify(() -> BitMaskDayParserImpl.getDays(127), times(1));
+            }
         }
     }
+
 }

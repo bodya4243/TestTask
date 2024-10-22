@@ -19,14 +19,13 @@ public class CsvProcessingJob {
     private static final int CSV_HOURS = 1;
     private static final int CSV_MINUTES = 2;
 
-    private final CsvParser csvParser;
-    private final BitMaskDayParser bitMaskDayParser;
+    private final CsvParserImpl csvParserImpl;
 
     @Scheduled(cron = "${scheduler.cron}")
     public void run() {
         log.info("Task run method started");
 
-        int[] csvParsed = csvParser.parseCsv();
+        int[] csvParsed = csvParserImpl.parseCsv();
 
         int bitMaskNum = csvParsed[CSV_MASK_NUM];
         int hours = csvParsed[CSV_HOURS];
@@ -45,7 +44,7 @@ public class CsvProcessingJob {
     }
 
     private boolean shouldRunApp(ZonedDateTime now, int binMaskNum, LocalTime scheduledTime) {
-        boolean shouldRun = bitMaskDayParser.getDays(binMaskNum).contains(now.getDayOfWeek())
+        boolean shouldRun = BitMaskDayParserImpl.getDays(binMaskNum).contains(now.getDayOfWeek())
                 && now.toLocalTime().isAfter(scheduledTime)
                 && now.toLocalTime().isBefore(scheduledTime.plusMinutes(2));
         log.info("App run condition: {}", shouldRun);
